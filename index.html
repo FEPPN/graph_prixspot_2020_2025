@@ -155,17 +155,12 @@
           },
           scales:{
             y: {
-    ticks: {
-      color: "#6b7280",
-      callback: v => `${Number(v).toFixed(0)}`
-    },
-    grid: {
-      color: "rgba(0,0,0,0.06)", // gris clair uniforme
-      lineWidth: 1
-    },
-    border: { display:false }
-  },
-              border:{ display:false }
+              ticks: {
+                color:"#6b7280",
+                callback: v => `${Number(v).toFixed(0)}`
+              },
+              grid: { color:"rgba(0,0,0,0.06)" },
+              border: { display:false }
             },
             x:{
               offset:true,
