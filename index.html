@@ -35,7 +35,7 @@
 
   <script>
     // --- CONFIG ---
-    const CSV_URL = "https://raw.githubusercontent.com/FEPPN/graph_prixspot_2020_2025/main/spot_arenh_2012_2025.csv"; 
+    const CSV_URL = "https://raw.githubusercontent.com/FEPPN/graph_prixspot_2020_2025/main/spot_arenh_2012_2025.csv";
 
     // --- HELPERS ---
     const parseNumberSmart = (s) => Number(String(s ?? '').trim().replace(/\s+/g,'').replace(',', '.'));
@@ -44,7 +44,7 @@
       if (t>0) return '\t'; if (s>=c) return ';'; return ',';
     }
     const FR_MONTHS = {"janv.":1,"févr.":2,"mars":3,"avr.":4,"mai":5,"juin":6,"juil.":7,"août":8,"sept.":9,"oct.":10,"nov.":11,"déc.":12};
-    function toSortKey(ym){ // "janv. 2017" -> "2017-01"
+    function toSortKey(ym){
       const p=String(ym).trim().split(/\s+/);
       const m=FR_MONTHS[(p[0]||'').toLowerCase()], y=Number(p[1]);
       return (!m||!Number.isFinite(y)) ? ym : `${y}-${String(m).padStart(2,'0')}`;
@@ -61,7 +61,6 @@
         const sep = detectSep(lines[0]);
         const header = lines[0].split(sep).map(h => h.trim().toLowerCase());
 
-        // Colonnes attendues dans spot_arenh_2012_2025.csv
         const idxYM    = header.findIndex(h => /year[_\s-]*month|mois|p[eé]riode|yearmonth/.test(h) || h==="year_month");
         const idxSpot  = header.findIndex(h => /prix.*mwh|mwh.*prix|spot/.test(h) || h==="prix mwh");
         const idxArenh = header.findIndex(h => /arenh/.test(h) || h==="arenh price");
@@ -79,7 +78,7 @@
           rows.push({ label: ym, sortKey: toSortKey(ym), spot, arenh });
         }
 
-        // tri + filtre 2012-01 .. 2020-12
+        // fenêtre : 2020-01 .. 2025-09
         const from = "2020-01", to = "2025-09";
         const filtered = rows
           .sort((a,b)=>(a.sortKey+'').localeCompare(b.sortKey+''))
@@ -87,7 +86,7 @@
 
         const labels   = filtered.map(r => r.label);
         const spotVals = filtered.map(r => r.spot);
-        const arenhVals= filtered.map(r => r.arenh);
+        const arenhVals= filtered.map(r => r.arenh); // non utilisé (on trace ARENH fixe = 42)
 
         drawChart(labels, spotVals, arenhVals);
       })
@@ -97,11 +96,35 @@
           .insertAdjacentHTML('beforeend', `<p class="err">Erreur : ${err.message}</p>`);
       });
 
-    function drawChart(labels, spotVals, arenhVals){
+    function drawChart(labels, spotVals){
       const ctx = document.getElementById('chart').getContext('2d');
       const grad = ctx.createLinearGradient(0,0,0,300);
       grad.addColorStop(0,"rgba(90,82,255,0.20)");
       grad.addColorStop(1,"rgba(90,82,255,0.00)");
+
+      // --- Moyenne spot (trait noir pointillé)
+      const avg = spotVals.reduce((a,b)=>a+b,0) / spotVals.length;
+      const avgLineDataset = {
+        label: "Moyenne prix spot",
+        data: labels.map(() => avg),
+        borderColor: "black",
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0,
+        fill: false,
+        borderDash: [6, 4]
+      };
+
+      // --- ARENH fixe à 42 (trait noir plein)
+      const arenhFixedDataset = {
+        label: "ARENH (42 €/MWh)",
+        data: labels.map(() => 42),
+        borderColor: "black",
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0,
+        fill: false
+      };
 
       new Chart(ctx,{
         type:'line',
@@ -118,17 +141,8 @@
               tension:0.25,
               fill:true
             },
-            {
-              label:"ARENH (€/MWh)",
-              data:arenhVals,
-              borderColor:"#334155",
-              backgroundColor:"transparent",
-              borderWidth:1.6,
-              pointRadius:0,
-              tension:0,
-              fill:false,
-              borderDash:[6,4]
-            }
+            arenhFixedDataset, // noir plein
+            avgLineDataset     // noir pointillé
           ]
         },
         options:{
@@ -137,7 +151,15 @@
           plugins:{
             legend:{
               position:"bottom",
-              labels:{ color:"#1f2937", font:{ size:13, weight:"600" } }
+              labels:{
+                color:"#1f2937",
+                font:{ size:13, weight:"600" },
+                // Même légende, mais sans remplissage des icônes
+                usePointStyle: false,
+                useBorderWidth: true,
+                boxWidth: 30,
+                boxHeight: 2
+              }
             },
             tooltip:{
               backgroundColor:"#fff", borderColor:"#e5e7eb", borderWidth:1,
