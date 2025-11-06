@@ -108,6 +108,7 @@
         label: "Moyenne prix spot",
         data: labels.map(() => avg),
         borderColor: "black",
+        backgroundColor:"transparent",
         borderWidth: 1.5,
         pointRadius: 0,
         tension: 0,
@@ -117,9 +118,10 @@
 
       // --- ARENH fixe à 42 (trait noir plein)
       const arenhFixedDataset = {
-        label: "ARENH (42 €/MWh)",
+        label: "ARENH (€/MWh)",
         data: labels.map(() => 42),
-        borderColor: "black",
+        borderColor: "#334155",
+        backgroundColor:"transparent",
         borderWidth: 1.5,
         pointRadius: 0,
         tension: 0,
@@ -135,6 +137,7 @@
               label:"Prix spot (€/MWh)",
               data:spotVals,
               borderColor:"#5A52FF",
+              backgroundColor:"transparent",
               backgroundColor:grad,
               borderWidth:1.8,
               pointRadius:0,
